@@ -65,7 +65,10 @@ fn sarif_run_properties_contains_security_score_and_grade() {
         "SARIF run.properties should contain a string security_grade"
     );
     let score = props["security_score"].as_u64().unwrap();
-    assert!(score < 100, "Dirty skill SARIF security_score should be below 100");
+    assert!(
+        score < 100,
+        "Dirty skill SARIF security_score should be below 100"
+    );
 }
 
 #[test]
@@ -167,7 +170,10 @@ fn json_output_contains_security_score_and_grade() {
         "JSON should contain a string security_grade field"
     );
     let score = parsed["security_score"].as_u64().unwrap();
-    assert!(score < 100, "Dirty skill security_score should be below 100");
+    assert!(
+        score < 100,
+        "Dirty skill security_score should be below 100"
+    );
 }
 
 #[test]

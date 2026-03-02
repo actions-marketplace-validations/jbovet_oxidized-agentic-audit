@@ -255,7 +255,10 @@ fn format_collection_summary(collection_path: &std::path::Path, reports: &[Audit
         };
 
         let score_col = {
-            let s = format!("{:>3}/100 ({})", report.security_score, report.security_grade);
+            let s = format!(
+                "{:>3}/100 ({})",
+                report.security_score, report.security_grade
+            );
             match report.security_score {
                 90..=100 => s.green().bold().to_string(),
                 60..=89 => s.yellow().bold().to_string(),

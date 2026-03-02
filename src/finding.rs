@@ -407,7 +407,11 @@ fn compute_security_score(findings: &[Finding]) -> (u8, SecurityGrade) {
                 let is_critical = f.rule_id.starts_with("bash/CAT-A")
                     || f.rule_id.starts_with("bash/CAT-D")
                     || f.rule_id.starts_with("prompt/");
-                if is_critical { 30 } else { 15 }
+                if is_critical {
+                    30
+                } else {
+                    15
+                }
             }
             Severity::Warning => 5,
             Severity::Info => 1,
