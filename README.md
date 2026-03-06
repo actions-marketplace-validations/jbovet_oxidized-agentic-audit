@@ -22,9 +22,10 @@
 ## Features
 
 - **Bash dangerous pattern scanner** — 19 regex rules across 8 categories (RCE, credential exfiltration, destructive ops, reverse shells, privilege escalation, unsafe variable expansion, outbound network)
+- **TypeScript/JavaScript security scanner** — 10 pure-Rust regex rules across 5 categories: arbitrary code execution (`eval`, `new Function`), shell execution via `child_process`, credential file access (SSH keys, AWS, kubeconfig), raw socket reverse shells, and unallowlisted outbound HTTP calls; scans `*.ts`, `*.tsx`, `*.mts`, `*.js`, `*.mjs`
 - **Prompt injection scanner** — 19 patterns detecting instruction override, role manipulation, jailbreak attempts, data exfiltration, code injection, system prompt extraction, delimiter injection, fictional framing, and priority override; automatically skips benign boilerplate files (LICENSE, CHANGELOG, NOTICE, AUTHORS, etc.)
-- **Frontmatter auditor** — 15 rules validating `SKILL.md` structure: missing file, reserved brand names, XML injection in fields, name format, field length limits, vague names, body length, Windows paths, third-person description, trigger context, time-sensitive content, and unscoped `Bash` in `allowed-tools`
-- **Package install auditor** — Detects `npm install`, `bun add`, `pip install` without explicit registry, unpinned `@latest` versions, and unapproved registries
+- **Frontmatter auditor** — 16 rules validating `SKILL.md` structure: missing file, reserved brand names, XML injection in fields, name format and directory-name match, field length limits, vague names, body length, Windows paths, third-person description, trigger context, time-sensitive content, and unscoped `Bash` in `allowed-tools`
+- **Package install auditor** — Detects `npm install`, `bun add`, `yarn add`, `pnpm add`, `pip install` without explicit registry, unpinned `@latest` versions, and unapproved registries (7 rules)
 - **Shell script linting** — shellcheck wrapper, automatically skipped when tool is not installed
 - **Secret scanning** — gitleaks wrapper, automatically skipped when tool is not installed
 - **Static analysis** — semgrep wrapper with 30-second timeout (gracefully skips when network is blocked or tool is unavailable)
@@ -46,9 +47,10 @@ The `oxidized-skills` GitHub Action audits skill directories in CI, produces a S
 | Input | Description | Required | Default |
 |---|---|---|---|
 | `skills-path` | Path to a single skill directory or a collection directory containing multiple skills. | No | `.` |
-| `version` | Version of oxidized-skills to download (e.g. `v0.1.1`). Use `latest` to always fetch the newest release. | No | `latest` |
+| `version` | Version of oxidized-skills to download (e.g. `v0.3.0`). Use `latest` to always fetch the newest release. | No | `latest` |
 | `strict` | Treat warnings as errors. Exit code 1 on any warning. | No | `false` |
 | `fail-on-warnings` | Fail the action when warnings are present, even without errors. | No | `false` |
+| `min-score` | Minimum security score (0–100). Fails the action if any skill scores below this threshold. | No | `` |
 | `format` | Output format for the audit report. One of `pretty`, `json`, `sarif`. | No | `sarif` |
 | `sarif-output` | File path where the SARIF report will be written. | No | `oxidized-skills-report.sarif` |
 | `config` | Path to a custom `oxidized-skills.toml` configuration file. | No | `` |
@@ -108,26 +110,26 @@ Download a pre-built binary for your platform from the [latest release](https://
 
 **Linux (x86_64):**
 ```bash
-curl -L https://github.com/jbovet/oxidized-skills/releases/download/v0.1.1/oxidized-skills-linux-x86_64.tar.gz | tar xz
+curl -L https://github.com/jbovet/oxidized-skills/releases/download/v0.3.0/oxidized-skills-linux-x86_64.tar.gz | tar xz
 sudo mv oxidized-skills /usr/local/bin/
 ```
 
 **macOS (Intel x86_64):**
 ```bash
-curl -L https://github.com/jbovet/oxidized-skills/releases/download/v0.1.1/oxidized-skills-macos-x86_64.tar.gz | tar xz
+curl -L https://github.com/jbovet/oxidized-skills/releases/download/v0.3.0/oxidized-skills-macos-x86_64.tar.gz | tar xz
 sudo mv oxidized-skills /usr/local/bin/
 ```
 
 **macOS (Apple Silicon / ARM64):**
 ```bash
-curl -L https://github.com/jbovet/oxidized-skills/releases/download/v0.1.1/oxidized-skills-macos-aarch64.tar.gz | tar xz
+curl -L https://github.com/jbovet/oxidized-skills/releases/download/v0.3.0/oxidized-skills-macos-aarch64.tar.gz | tar xz
 sudo mv oxidized-skills /usr/local/bin/
 ```
 
 **Windows (x86_64):**
 Download `oxidized-skills-windows-x86_64.zip` from [releases](https://github.com/jbovet/oxidized-skills/releases), extract it, and add the folder to your `PATH`.
 
-> **Tip:** Replace `v0.1.1` with the latest version from [releases](https://github.com/jbovet/oxidized-skills/releases).
+> **Tip:** Replace `v0.3.0` with the latest version from [releases](https://github.com/jbovet/oxidized-skills/releases).
 
 ## Usage
 
@@ -146,6 +148,9 @@ oxidized-skills audit ./my-skill --format sarif --output report.sarif
 # Strict mode (warnings become errors)
 oxidized-skills audit ./my-skill --strict
 
+# Quality gate — fail if score drops below 80
+oxidized-skills audit ./my-skill --min-score 80
+
 # Custom config
 oxidized-skills audit ./my-skill --config ./my-config.toml
 ```
@@ -161,6 +166,9 @@ oxidized-skills audit-all ~/skills --format json
 
 # Strict mode across all skills
 oxidized-skills audit-all ~/skills --strict
+
+# Quality gate — fail if any skill scores below 80
+oxidized-skills audit-all ~/skills --min-score 80
 ```
 
 If you accidentally run `audit` on a collection directory, the tool detects it and shows a helpful error with the correct commands to run.
@@ -191,6 +199,7 @@ oxidized-skills explain bash/CAT-A1
 ### Core scanners (no external tools required)
 
 - `bash_patterns`: Dangerous shell commands (RCE, reverse shells).
+- `typescript`: Dangerous TypeScript/JavaScript patterns (code execution, shell access, credential reads, raw sockets, outbound HTTP).
 - `prompt`: Prompt injection patterns in `SKILL.md`.
 - `package_install`: Unsafe package manager usage (pinned versions, registries).
 - `frontmatter`: `SKILL.md` metadata quality and safety.
@@ -208,9 +217,9 @@ To use local rules and avoid network calls:
 config = "my-rules.yml"
 ```
 
-## Output Formats
+## External Tool Wrappers
 
-### External tool wrappers (auto-skipped when tool not on PATH)
+### Auto-skipped when tool not on PATH
 
 | Scanner | Tool required | What it checks | Notes |
 |---------|--------------|----------------|-------|
@@ -271,7 +280,7 @@ Run `oxidized-skills check-tools` to see which external tools are available in y
 | `prompt/perm-delete-all` | Warning | Mass deletion instruction (`rm -rf /`, `delete all`, `rm *`) |
 | `prompt/perm-sudo` | Warning | Privilege escalation (sudo/root) |
 
-### Frontmatter (15 rules)
+### Frontmatter (16 rules)
 
 | Rule | Severity | Description |
 |------|----------|-------------|
@@ -282,6 +291,7 @@ Run `oxidized-skills check-tools` to see which external tools are available in y
 | `frontmatter/invalid-name-format` | Warning | Name has uppercase letters, spaces, or underscores |
 | `frontmatter/name-too-long` | Warning | Name exceeds 64 characters |
 | `frontmatter/name-too-vague` | Warning | Name uses a vague generic term (helper, utils, tools, data, files, documents) |
+| `frontmatter/name-directory-mismatch` | Warning | `name` field does not match the containing directory name |
 | `frontmatter/description-missing` | Warning | Description field absent or empty |
 | `frontmatter/description-too-long` | Warning | Description exceeds 1024 characters |
 | `frontmatter/description-not-third-person` | Warning | Description uses first or second person instead of third person |
@@ -291,12 +301,31 @@ Run `oxidized-skills check-tools` to see which external tools are available in y
 | `frontmatter/description-no-trigger` | Info | Description doesn't include "when to use" trigger context |
 | `frontmatter/time-sensitive-content` | Warning | Body contains date-based conditional that will become stale (e.g. "before 2025") |
 
-### Package Install (5 rules)
+### TypeScript/JavaScript Patterns (Categories A-H)
+
+| Rule | Severity | Description |
+|------|----------|-------------|
+| `typescript/CAT-A1` | Error | `eval()` call — arbitrary code execution risk |
+| `typescript/CAT-A2` | Error | `new Function()` — dynamic code construction, arbitrary code execution risk |
+| `typescript/CAT-B1` | Warning | `child_process` module imported — enables shell command execution |
+| `typescript/CAT-B2` | Warning | `execSync`/`spawnSync` — executes shell commands synchronously |
+| `typescript/CAT-B3` | Info | `exec`/`spawn`/`execFile` — possible async shell execution; verify `child_process` context |
+| `typescript/CAT-C1` | Error | SSH private key path detected — credential access risk |
+| `typescript/CAT-C2` | Error | AWS credentials path detected — credential exfiltration risk |
+| `typescript/CAT-C3` | Error | Kubernetes kubeconfig path detected — credential access risk |
+| `typescript/CAT-D1` | Error | Node.js `net` module raw socket — potential reverse shell or backdoor |
+| `typescript/CAT-H1` | Info | Outbound HTTP call detected — verify domain is in allowed list |
+
+> **Suppression:** Add `// audit:ignore` or `// oxidized-skills:ignore` as a trailing comment on any line. Category H findings are automatically suppressed when every URL on the line resolves to an allowlisted domain in `oxidized-skills.toml`.
+
+### Package Install (7 rules)
 
 | Rule | Severity | Description |
 |------|----------|-------------|
 | `pkg/F1-npm` | Warning | npm install without --registry |
 | `pkg/F1-bun` | Warning | bun add without --registry |
+| `pkg/F1-yarn` | Warning | yarn add/install without --registry |
+| `pkg/F1-pnpm` | Warning | pnpm add/install without --registry |
 | `pkg/F1-pip` | Warning | pip install without --index-url |
 | `pkg/F2-unpinned` | Warning | @latest unpinned version |
 | `pkg/F3-registry` | Warning | Unapproved registry URL |
@@ -339,8 +368,8 @@ Result: FAILED  |  Score: 40/100 (D)  |  3 errors, 2 warnings, 0 info, 0 suppres
 **Collection summary table** — a score column next to each skill row:
 
 ```
-  ✗  my-skill               FAILED    40/100 (D)  3e 2w 0i
-  ✓  clean-skill            PASSED   100/100 (A)  0e 0w 0i
+  ✗  my-skill               FAILED    40/100 (D)  3 err, 2 warn, 0 info
+  ✓  clean-skill            PASSED   100/100 (A)  0 err, 0 warn, 0 info
 ```
 
 **JSON output** — `security_score` (integer) and `security_grade` (string) as top-level fields:
@@ -400,6 +429,7 @@ semgrep = true
 secrets = true
 prompt = true
 bash_patterns = true
+typescript = true
 package_install = true
 frontmatter = true
 ```
