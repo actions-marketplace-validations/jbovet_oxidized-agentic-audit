@@ -7,6 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.4.0] - 2026-03-09
+
+### Added
+- **Agent auditing** — new `audit --type agent` command scans `AGENT.md` files via the new `agent_frontmatter` scanner, detecting bare `Bash` tool usage, unconstrained MCP servers, missing required fields, and prompt-injection patterns in system prompts.
+- **`audit-all --type agent`** — collection-level audit over directories of agents, with the same summary table and `--min-score` gate as skill collection audits.
+- **`agent/bare-tool` rule** — warns when `tools:` lists `Bash` without a command scope (e.g. `Bash(find,ls)`), granting unrestricted shell access.
+- **`agent/unconstrained-mcp-server` rule** — warns when an MCP server entry has no tool allowlist.
+- **`skip-download` input for the GitHub Action** — set `skip-download: 'true'` to use a binary already present in `PATH`, bypassing the release-download flow. Intended for CI jobs that build the binary locally.
+
+### Changed
+- **Project renamed** from `oxidized-skills` to `oxidized-agentic-audit` across all source files, documentation, CI workflows, Docker images, and configuration. The binary, crate, and GitHub Action are all now `oxidized-agentic-audit`. Suppression files are renamed from `.oxidized-skills-ignore` to `.oxidized-agentic-audit-ignore`.
+- **`action-test` CI job** now builds the binary from source and passes `skip-download: 'true'` to the local action, eliminating the dependency on a published GitHub release during CI runs.
+
 ## [0.3.1] - 2026-03-06
 
 ### Security

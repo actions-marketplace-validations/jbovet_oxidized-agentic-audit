@@ -47,7 +47,7 @@ The `oxidized-agentic-audit` GitHub Action audits skill and agent directories in
 | Input | Description | Required | Default |
 |---|---|---|---|
 | `skills-path` | Path to a single skill/agent directory or a collection directory containing multiple skills and agents. | No | `.` |
-| `version` | Version of oxidized-agentic-audit to download (e.g. `v0.3.0`). Use `latest` to always fetch the newest release. | No | `latest` |
+| `version` | Version of oxidized-agentic-audit to download (e.g. `v0.4.0`). Use `latest` to always fetch the newest release. | No | `latest` |
 | `strict` | Treat warnings as errors. Exit code 1 on any warning. | No | `false` |
 | `fail-on-warnings` | Fail the action when warnings are present, even without errors. | No | `false` |
 | `min-score` | Minimum security score (0–100). Fails the action if any skill scores below this threshold. | No | `` |
@@ -68,7 +68,7 @@ The `oxidized-agentic-audit` GitHub Action audits skill and agent directories in
 #### Basic — run on push and PR
 
 ```yaml
-- uses: jbovet/oxidized-agentic-audit@v1
+- uses: jbovet/oxidized-agentic-audit@v0.4.0
   with:
     skills-path: ./skills
 ```
@@ -76,7 +76,7 @@ The `oxidized-agentic-audit` GitHub Action audits skill and agent directories in
 #### Strict mode — block PR merge on any finding
 
 ```yaml
-- uses: jbovet/oxidized-agentic-audit@v1
+- uses: jbovet/oxidized-agentic-audit@v0.4.0
   with:
     skills-path: ./skills
     strict: 'true'
@@ -86,7 +86,7 @@ The `oxidized-agentic-audit` GitHub Action audits skill and agent directories in
 
 ```yaml
 - uses: actions/checkout@v4
-- uses: jbovet/oxidized-agentic-audit@v1
+- uses: jbovet/oxidized-agentic-audit@v0.4.0
   id: audit
   with:
     skills-path: ./skills
@@ -110,26 +110,26 @@ Download a pre-built binary for your platform from the [latest release](https://
 
 **Linux (x86_64):**
 ```bash
-curl -L https://github.com/jbovet/oxidized-agentic-audit/releases/download/v0.3.1/oxidized-agentic-audit-linux-x86_64.tar.gz | tar xz
+curl -L https://github.com/jbovet/oxidized-agentic-audit/releases/download/v0.4.0/oxidized-agentic-audit-linux-x86_64.tar.gz | tar xz
 sudo mv oxidized-agentic-audit /usr/local/bin/
 ```
 
 **macOS (Intel x86_64):**
 ```bash
-curl -L https://github.com/jbovet/oxidized-agentic-audit/releases/download/v0.3.1/oxidized-agentic-audit-macos-x86_64.tar.gz | tar xz
+curl -L https://github.com/jbovet/oxidized-agentic-audit/releases/download/v0.4.0/oxidized-agentic-audit-macos-x86_64.tar.gz | tar xz
 sudo mv oxidized-agentic-audit /usr/local/bin/
 ```
 
 **macOS (Apple Silicon / ARM64):**
 ```bash
-curl -L https://github.com/jbovet/oxidized-agentic-audit/releases/download/v0.3.1/oxidized-agentic-audit-macos-aarch64.tar.gz | tar xz
+curl -L https://github.com/jbovet/oxidized-agentic-audit/releases/download/v0.4.0/oxidized-agentic-audit-macos-aarch64.tar.gz | tar xz
 sudo mv oxidized-agentic-audit /usr/local/bin/
 ```
 
 **Windows (x86_64):**
 Download `oxidized-agentic-audit-windows-x86_64.zip` from [releases](https://github.com/jbovet/oxidized-agentic-audit/releases), extract it, and add the folder to your `PATH`.
 
-> **Tip:** Replace `v0.3.1` with the latest version from [releases](https://github.com/jbovet/oxidized-agentic-audit/releases).
+> **Tip:** Replace `v0.4.0` with the latest version from [releases](https://github.com/jbovet/oxidized-agentic-audit/releases).
 
 ## Usage
 
