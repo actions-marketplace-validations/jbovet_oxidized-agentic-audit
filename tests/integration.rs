@@ -432,12 +432,7 @@ fn audit_dirty_agent_json_format() {
 #[test]
 fn audit_suppressed_agent_passes() {
     oxidized_agentic_audit()
-        .args([
-            "scan",
-            "--type",
-            "agent",
-            "tests/fixtures/suppressed-agent",
-        ])
+        .args(["scan", "--type", "agent", "tests/fixtures/suppressed-agent"])
         .assert()
         .success();
 }
